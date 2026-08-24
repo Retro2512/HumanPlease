@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "site": "shop.example.com",
   "locale": "en-CA",
   "startPath": "/support",
@@ -24,6 +24,7 @@
       "action": "wait_for_human"
     }
   ],
-  "verifiedOn": "2026-08-23"
+  "verifiedOn": "2026-08-24",
+  "handoffSeconds": 94
 }
 

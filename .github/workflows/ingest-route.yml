@@ -9,6 +9,10 @@ permissions:
   pull-requests: write
   issues: write
 
+concurrency:
+  group: route-intake
+  cancel-in-progress: false
+
 jobs:
   intake:
     if: startsWith(github.event.issue.title, '[route]')
@@ -25,15 +29,6 @@ jobs:
         env:
           EVENT_PATH: ${{ github.event_path }}
         run: node scripts/ingest-issue.mjs "$EVENT_PATH"
-      - name: Close duplicate
-        if: steps.intake.outputs.status == 'duplicate'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ISSUE: ${{ github.event.issue.number }}
-          REPO: ${{ github.repository }}
-        run: |
-          gh issue comment "$ISSUE" --repo "$REPO" --body "This exact route is already in the catalog. Thank you for checking it."
-          gh issue close "$ISSUE" --repo "$REPO" --reason completed
       - name: Explain invalid submission
         if: steps.intake.outputs.status == 'invalid'
         env:
@@ -44,20 +39,22 @@ jobs:
         run: |
           gh issue comment "$ISSUE" --repo "$REPO" --body "The route could not be added: $MESSAGE"
       - name: Open route pull request
-        if: steps.intake.outputs.status == 'created'
+        if: steps.intake.outputs.status == 'created' || steps.intake.outputs.status == 'updated'
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
           SITE: ${{ steps.intake.outputs.site }}
           LOCALE: ${{ steps.intake.outputs.locale }}
+          POSITION: ${{ steps.intake.outputs.position }}
+          SCORE: ${{ steps.intake.outputs.score_seconds }}
         run: |
           branch="route/issue-$ISSUE"
           git config user.name "humanplease-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add routes catalog.json
-          git commit -m "Add route for $SITE ($LOCALE)"
+          git add routes archive catalog.json
+          git commit -m "Record route timing for $SITE ($LOCALE)"
           git push origin "$branch"
-          gh pr create --repo "$REPO" --base main --head "$branch" --title "Add route for $SITE ($LOCALE)" --body "Adds the privacy-checked route from #$ISSUE."
-          gh issue comment "$ISSUE" --repo "$REPO" --body "The route passed validation and is ready for review."
+          gh pr create --repo "$REPO" --base main --head "$branch" --title "Record route timing for $SITE ($LOCALE)" --body "Adds the privacy-checked timing from #$ISSUE. Ranking position: **$POSITION**. Comparison score: **$SCORE seconds**."
+          gh issue comment "$ISSUE" --repo "$REPO" --body "The timing passed validation. This path ranks in the **$POSITION** position with a comparison score of **$SCORE seconds** and is ready for review."

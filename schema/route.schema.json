@@ -1,72 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/Retro2512/HumanPlease/main/schema/route.schema.json",
-  "title": "HumanPlease route",
-  "description": "A privacy-safe, pre-handoff path through a site's support chat tree.",
+  "title": "Ranked HumanPlease route",
+  "description": "A stored route with its recent timing window and comparison score.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "site", "locale", "startPath", "steps", "verifiedOn"],
+  "required": ["schemaVersion", "id", "site", "locale", "startPath", "steps", "verifiedOn", "timing"],
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "site": {
-      "type": "string",
-      "minLength": 4,
-      "maxLength": 253,
-      "pattern": "^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$"
-    },
-    "locale": {
-      "type": "string",
-      "minLength": 2,
-      "maxLength": 35,
-      "pattern": "^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-[A-Z]{2}|-[0-9]{3})?$"
-    },
-    "startPath": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 240,
-      "pattern": "^/[^?#]*$"
-    },
-    "steps": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 30,
-      "items": { "$ref": "#/$defs/step" }
-    },
-    "verifiedOn": {
-      "type": "string",
-      "format": "date"
-    }
-  },
-  "$defs": {
-    "step": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["action", "label"],
-          "properties": {
-            "action": { "enum": ["open_chat", "select", "fill_required"] },
-            "label": { "type": "string", "minLength": 1, "maxLength": 120 }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["action", "value"],
-          "properties": {
-            "action": { "const": "send" },
-            "value": { "type": "string", "minLength": 1, "maxLength": 80 }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["action"],
-          "properties": {
-            "action": { "const": "wait_for_human" }
-          }
-        }
-      ]
+    "schemaVersion": { "const": 2 },
+    "id": { "type": "string", "pattern": "^[a-f0-9]{12}$" },
+    "site": { "type": "string", "minLength": 4, "maxLength": 253 },
+    "locale": { "type": "string", "minLength": 2, "maxLength": 35 },
+    "startPath": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^/[^?#]*$" },
+    "steps": { "type": "array", "minItems": 1, "maxItems": 30, "items": { "$ref": "submission.schema.json#/$defs/step" } },
+    "verifiedOn": { "type": "string", "format": "date" },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sampleCount", "samplesSeconds", "medianSeconds", "p90Seconds", "madSeconds", "scoreSeconds"],
+      "properties": {
+        "sampleCount": { "type": "integer", "minimum": 1 },
+        "samplesSeconds": { "type": "array", "minItems": 1, "maxItems": 40, "items": { "type": "integer", "minimum": 1, "maximum": 14400 } },
+        "medianSeconds": { "type": "number", "minimum": 1, "maximum": 14400 },
+        "p90Seconds": { "type": "number", "minimum": 1, "maximum": 14400 },
+        "madSeconds": { "type": "number", "minimum": 0, "maximum": 14400 },
+        "scoreSeconds": { "type": "integer", "minimum": 1 }
+      }
     }
   }
 }

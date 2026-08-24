@@ -1,10 +1,22 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeRoute, routeFingerprint, routeRelativePath, validateRoute } from '../scripts/lib/route.mjs';
+import {
+  RECENT_SAMPLE_WINDOW,
+  addTimingSample,
+  archiveRelativePath,
+  chooseFrontRoute,
+  createStoredRoute,
+  currentRelativePath,
+  normalizeSubmission,
+  routeFingerprint,
+  timingFor,
+  validateStoredRoute,
+  validateSubmission,
+} from '../scripts/lib/route.mjs';
 
-function validRoute() {
+function validSubmission(overrides = {}) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     site: 'shop.example.com',
     locale: 'en-CA',
     startPath: '/support',
@@ -15,51 +27,95 @@ function validRoute() {
       { action: 'send', value: 'live agent' },
       { action: 'wait_for_human' },
     ],
-    verifiedOn: '2026-08-23',
+    verifiedOn: '2026-08-24',
+    handoffSeconds: 94,
+    ...overrides,
   };
 }
 
-test('accepts a route that contains only navigation data', () => {
-  assert.deepEqual(validateRoute(validRoute()), []);
+function storedWithSamples(submission, samples) {
+  return {
+    ...createStoredRoute({ ...submission, handoffSeconds: samples[0] }),
+    timing: timingFor(samples),
+  };
+}
+
+test('accepts a timed submission containing only navigation data', () => {
+  assert.deepEqual(validateSubmission(validSubmission()), []);
+  assert.deepEqual(validateStoredRoute(createStoredRoute(validSubmission())), []);
 });
 
-test('rejects private values and URL queries', () => {
-  const route = validRoute();
-  route.startPath = '/support?account=123';
+test('rejects private values, URL queries, and invalid timings', () => {
+  const route = validSubmission({ startPath: '/support?account=123', handoffSeconds: 0 });
   route.steps[2].label = 'me@example.com';
-  const errors = validateRoute(route).join('\n');
+  const errors = validateSubmission(route).join('\n');
   assert.match(errors, /query or fragment/);
   assert.match(errors, /email address/);
+  assert.match(errors, /handoffSeconds/);
 });
 
-test('rejects case details in a send step', () => {
-  const route = validRoute();
-  route.steps[3].value = 'Order 88776655 needs a live agent';
-  assert.match(validateRoute(route).join('\n'), /long number/);
-});
-
-test('rejects a handoff request mixed with identity details', () => {
-  const route = validRoute();
-  route.steps[3].value = 'My name is Jordan, connect me to a human';
-  assert.match(validateRoute(route).join('\n'), /case or identity details/);
+test('rejects case details in a handoff request', () => {
+  const route = validSubmission();
+  route.steps[3].value = 'My order 88776655 needs a live agent';
+  const errors = validateSubmission(route).join('\n');
+  assert.match(errors, /long number/);
+  assert.match(errors, /case or identity details/);
 });
 
 test('requires a single final handoff wait', () => {
-  const route = validRoute();
+  const route = validSubmission();
   route.steps.push({ action: 'select', label: 'Continue' });
-  assert.match(validateRoute(route).join('\n'), /final step/);
+  assert.match(validateSubmission(route).join('\n'), /final step/);
 });
 
-test('fingerprint ignores the verification date', () => {
-  const first = validRoute();
-  const second = validRoute();
-  second.verifiedOn = '2026-08-22';
+test('fingerprint ignores timing and verification date', () => {
+  const first = validSubmission();
+  const second = validSubmission({ handoffSeconds: 180, verifiedOn: '2026-08-23' });
   assert.equal(routeFingerprint(first), routeFingerprint(second));
 });
 
-test('normalization produces the canonical storage path', () => {
-  const route = validRoute();
-  route.site = ' SHOP.EXAMPLE.COM ';
-  const normalized = normalizeRoute(route);
-  assert.match(routeRelativePath(normalized), /^routes\/shop\.example\.com\/en-CA\/[a-f0-9]{12}\.json$/);
+test('timing score penalizes uncertainty and slow tail results', () => {
+  const stable = timingFor([90, 91, 89, 90, 90]);
+  const erratic = timingFor([40, 60, 90, 180, 300]);
+  assert.equal(stable.medianSeconds, 90);
+  assert.equal(erratic.medianSeconds, 90);
+  assert.ok(erratic.scoreSeconds > stable.scoreSeconds);
+  assert.equal(erratic.p90Seconds, 300);
+});
+
+test('a challenger needs three samples before it can replace the front route', () => {
+  const current = storedWithSamples(validSubmission({ startPath: '/support' }), [120, 121, 119]);
+  const challengerOne = storedWithSamples(validSubmission({ startPath: '/contact' }), [45]);
+  assert.equal(chooseFrontRoute([current, challengerOne], current.id).id, current.id);
+  const challengerThree = storedWithSamples(validSubmission({ startPath: '/contact' }), [45, 48, 46]);
+  assert.equal(chooseFrontRoute([current, challengerThree], current.id).id, challengerThree.id);
+});
+
+test('one fast challenger sample does not replace a one-sample front route', () => {
+  const current = storedWithSamples(validSubmission({ startPath: '/support' }), [120]);
+  const challenger = storedWithSamples(validSubmission({ startPath: '/contact' }), [30]);
+  assert.equal(chooseFrontRoute([current, challenger], current.id).id, current.id);
+});
+
+test('a proven but slower challenger does not replace an under-sampled front route', () => {
+  const current = storedWithSamples(validSubmission({ startPath: '/support' }), [60]);
+  const challenger = storedWithSamples(validSubmission({ startPath: '/contact' }), [180, 190, 185]);
+  assert.equal(chooseFrontRoute([current, challenger], current.id).id, current.id);
+});
+
+test('the comparison uses only the latest forty samples while retaining total count', () => {
+  let route = createStoredRoute(validSubmission({ handoffSeconds: 100 }));
+  for (let seconds = 101; seconds <= 145; seconds += 1) {
+    route = addTimingSample(route, seconds, '2026-08-24');
+  }
+  assert.equal(route.timing.sampleCount, 46);
+  assert.equal(route.timing.samplesSeconds.length, RECENT_SAMPLE_WINDOW);
+  assert.equal(route.timing.samplesSeconds[0], 106);
+  assert.deepEqual(validateStoredRoute(route), []);
+});
+
+test('canonical storage separates the front route from archives', () => {
+  const route = createStoredRoute(normalizeSubmission(validSubmission({ site: ' SHOP.EXAMPLE.COM ' })));
+  assert.equal(currentRelativePath(route), 'routes/shop.example.com/en-CA/current.json');
+  assert.match(archiveRelativePath(route), /^archive\/shop\.example\.com\/en-CA\/[a-f0-9]{12}\.json$/);
 });

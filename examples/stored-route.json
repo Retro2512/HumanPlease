@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "id": "14e4fe2f111e",
+  "site": "shop.example.com",
+  "locale": "en-CA",
+  "startPath": "/support",
+  "steps": [
+    { "action": "open_chat", "label": "Chat with us" },
+    { "action": "select", "label": "Something else" },
+    { "action": "fill_required", "label": "Email" },
+    { "action": "send", "value": "live agent" },
+    { "action": "wait_for_human" }
+  ],
+  "verifiedOn": "2026-08-24",
+  "timing": {
+    "sampleCount": 3,
+    "samplesSeconds": [94, 101, 89],
+    "medianSeconds": 94,
+    "p90Seconds": 101,
+    "madSeconds": 5,
+    "scoreSeconds": 121
+  }
+}

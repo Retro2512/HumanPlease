@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Share only the pre-handoff route. Do not include a transcript, form values, account details, tokens, screenshots, or messages from the associate.
-        <!-- humanplease-route-v1 -->
+        <!-- humanplease-route-v2 -->
   - type: textarea
     id: route
     attributes:
@@ -15,7 +15,7 @@ body:
       render: json
       placeholder: |
         {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "site": "shop.example.com",
           "locale": "en-CA",
           "startPath": "/support",
@@ -24,7 +24,8 @@ body:
             { "action": "send", "value": "live agent" },
             { "action": "wait_for_human" }
           ],
-          "verifiedOn": "2026-08-23"
+          "verifiedOn": "2026-08-24",
+          "handoffSeconds": 94
         }
     validations:
       required: true
@@ -35,4 +36,3 @@ body:
       options:
         - label: This contains only the route and no transcript, form value, personal information, or secret.
           required: true
-

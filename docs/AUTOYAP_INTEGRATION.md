@@ -6,7 +6,8 @@ small route schema.
 ## Capture boundary
 
 Start recording when the support chat opens. Stop as soon as AutoYap confirms that an
-associate joined.
+associate joined. Round the elapsed monotonic duration to the nearest whole second and send
+it as `handoffSeconds`. Do not send wall-clock timestamps.
 
 Map actions to these five step types:
 
@@ -38,7 +39,7 @@ submitted later.
 Create a GitHub issue with:
 
 - title: `[route] <hostname> (<locale>)`
-- body marker: `<!-- humanplease-route-v1 -->`
+- body marker: `<!-- humanplease-route-v2 -->`
 - one fenced `json` block containing the route object
 
 The public web fallback is:
@@ -47,8 +48,9 @@ The public web fallback is:
 https://github.com/Retro2512/HumanPlease/issues/new?template=share-route.yml
 ```
 
-The intake workflow validates the object, normalizes it, calculates its route ID, rebuilds
-the catalog, and opens a pull request. Exact duplicates are closed without creating files.
+The intake workflow validates the object, normalizes it, adds the timing to the route's
+recent sample window, reruns the ranking, rebuilds both catalogs, and opens a pull request.
+An existing path receives another timing sample instead of a duplicate file.
 
 The extension should submit through a GitHub session the user already chose to use, or open
 the pre-filled issue in the browser. HumanPlease does not require or accept a GitHub token
@@ -62,8 +64,11 @@ Fetch the catalog first:
 https://raw.githubusercontent.com/Retro2512/HumanPlease/main/catalog.json
 ```
 
-Each catalog entry includes a relative `path`. Fetch that file from the same commit or raw
+The main catalog contains exactly one selected route per hostname and locale. Each entry
+includes timing evidence and a relative `path`. Fetch that file from the same commit or raw
 base URL. Match exact host first, then parent domains. Prefer the exact locale, then the
 same language, then any remaining route. Treat every route as a hint: if a label is missing
 or the widget changed, fall back to normal navigation rather than stopping the run.
 
+The slower alternatives remain available from `archive/catalog.json`, but clients should
+not try them before the selected route fails.
