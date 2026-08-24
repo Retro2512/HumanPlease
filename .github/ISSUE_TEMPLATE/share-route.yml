@@ -1,0 +1,38 @@
+name: Share a route
+description: Add a privacy-safe path through a support chat tree to a human associate.
+title: "[route] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share only the pre-handoff route. Do not include a transcript, form values, account details, tokens, screenshots, or messages from the associate.
+        <!-- humanplease-route-v1 -->
+  - type: textarea
+    id: route
+    attributes:
+      label: Route JSON
+      description: Paste one route object. The automated intake checks it before opening a pull request.
+      render: json
+      placeholder: |
+        {
+          "schemaVersion": 1,
+          "site": "shop.example.com",
+          "locale": "en-CA",
+          "startPath": "/support",
+          "steps": [
+            { "action": "open_chat", "label": "Chat with us" },
+            { "action": "send", "value": "live agent" },
+            { "action": "wait_for_human" }
+          ],
+          "verifiedOn": "2026-08-23"
+        }
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: This contains only the route and no transcript, form value, personal information, or secret.
+          required: true
+

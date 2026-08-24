@@ -1,0 +1,63 @@
+name: Intake route
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  intake:
+    if: startsWith(github.event.issue.title, '[route]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Read and validate submission
+        id: intake
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+        run: node scripts/ingest-issue.mjs "$EVENT_PATH"
+      - name: Close duplicate
+        if: steps.intake.outputs.status == 'duplicate'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh issue comment "$ISSUE" --repo "$REPO" --body "This exact route is already in the catalog. Thank you for checking it."
+          gh issue close "$ISSUE" --repo "$REPO" --reason completed
+      - name: Explain invalid submission
+        if: steps.intake.outputs.status == 'invalid'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          MESSAGE: ${{ steps.intake.outputs.message }}
+        run: gh issue comment "$ISSUE" --repo "$REPO" --body "The route could not be added: $MESSAGE"
+      - name: Open route pull request
+        if: steps.intake.outputs.status == 'created'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          SITE: ${{ steps.intake.outputs.site }}
+          LOCALE: ${{ steps.intake.outputs.locale }}
+        run: |
+          branch="route/issue-$ISSUE"
+          git config user.name "humanplease-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add routes catalog.json
+          git commit -m "Add route for $SITE ($LOCALE)"
+          git push origin "$branch"
+          gh pr create --repo "$REPO" --base main --head "$branch" --title "Add route for $SITE ($LOCALE)" --body "Adds the privacy-checked route from #$ISSUE."
+          gh issue comment "$ISSUE" --repo "$REPO" --body "The route passed validation and is ready for review."
+

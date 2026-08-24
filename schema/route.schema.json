@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Retro2512/HumanPlease/main/schema/route.schema.json",
+  "title": "HumanPlease route",
+  "description": "A privacy-safe, pre-handoff path through a site's support chat tree.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "site", "locale", "startPath", "steps", "verifiedOn"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "site": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 253,
+      "pattern": "^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$"
+    },
+    "locale": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 35,
+      "pattern": "^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-[A-Z]{2}|-[0-9]{3})?$"
+    },
+    "startPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^/[^?#]*$"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 30,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "verifiedOn": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "$defs": {
+    "step": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "label"],
+          "properties": {
+            "action": { "enum": ["open_chat", "select", "fill_required"] },
+            "label": { "type": "string", "minLength": 1, "maxLength": 120 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "value"],
+          "properties": {
+            "action": { "const": "send" },
+            "value": { "type": "string", "minLength": 1, "maxLength": 80 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action"],
+          "properties": {
+            "action": { "const": "wait_for_human" }
+          }
+        }
+      ]
+    }
+  }
+}
+

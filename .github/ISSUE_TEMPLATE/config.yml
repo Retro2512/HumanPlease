@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report private data or a security problem
+    url: https://github.com/Retro2512/HumanPlease/security/advisories/new
+    about: Use a private report instead of putting sensitive data in an issue.
+

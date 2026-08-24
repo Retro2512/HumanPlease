@@ -1,0 +1,17 @@
+{
+  "name": "humanplease-routes",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Privacy-safe routes through support chat trees to a human associate.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "catalog": "node scripts/build-catalog.mjs",
+    "validate": "node scripts/validate.mjs",
+    "test": "node --test"
+  }
+}
+
