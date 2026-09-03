@@ -127,10 +127,12 @@ private key.
 
 ## `core.js` client contract
 
-The front end should send reports to the deployed service's `/v1/reports` endpoint with the
-JSON shape above and the Turnstile token header. Generate a fresh base64url nonce for a new
-report and retain it only while retrying that report. Do not send a raw duration, timestamp,
-timezone, session value, contributor value, free text, or Turnstile token in the JSON body.
+The production report endpoint is
+`https://humanplease-reports.sudhan2512.workers.dev/v1/reports`. Render invisible Turnstile
+with site key `0x4AAAAAAEmRrhF2iuMf1dTb` and send its response in the Turnstile token header.
+Generate a fresh base64url nonce for a new report and retain it only while retrying that
+report. Do not send a raw duration, timestamp, timezone, session value, contributor value,
+free text, or Turnstile token in the JSON body.
 
 Page HTML should render the baked `data/route_stats.json` values first. A successful live
 stats response may replace those values with the current aggregate. If the API is slow,

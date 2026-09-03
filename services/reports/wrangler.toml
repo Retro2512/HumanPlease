@@ -10,12 +10,12 @@ GITHUB_BASE_BRANCH = "main"
 [[d1_databases]]
 binding = "DB"
 database_name = "humanplease-reports"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "352d60e0-6a69-41c0-837d-05e308c522b3"
 migrations_dir = "migrations"
 
 [[kv_namespaces]]
 binding = "REPORTS_KV"
-id = "00000000000000000000000000000000"
+id = "c42390da7b6145f2abed5645f6bceece"
 
 [triggers]
 crons = ["17 3 * * *"]
