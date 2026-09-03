@@ -10,8 +10,17 @@
   },
   "scripts": {
     "catalog": "node scripts/build-catalog.mjs",
+    "reports:manifest": "node scripts/build-slug-manifest.mjs",
+    "reports:manifest:upload": "node scripts/upload-slug-manifest.mjs",
+    "reports:typecheck": "tsc -p services/reports/tsconfig.json",
     "validate": "node scripts/validate.mjs",
-    "test": "node --test"
+    "test": "node --import tsx --test"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260903.1",
+    "ajv": "^8.17.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.0",
+    "wrangler": "^4.129.0"
   }
 }
-

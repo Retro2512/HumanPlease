@@ -1,0 +1,26 @@
+name = "humanplease-reports"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+PRODUCTION_ORIGIN = "https://humanplease.wiki"
+GITHUB_REPOSITORY = "Retro2512/HumanPlease"
+GITHUB_BASE_BRANCH = "main"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "humanplease-reports"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[[kv_namespaces]]
+binding = "REPORTS_KV"
+id = "00000000000000000000000000000000"
+
+[triggers]
+crons = ["17 3 * * *"]
+
+[dev]
+ip = "localhost"
+port = 8787
+local_protocol = "http"
