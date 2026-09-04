@@ -106,7 +106,6 @@ try {
     promoted,
     score_seconds: routes.find((route) => route.id === id).timing.scoreSeconds,
   });
-} catch (error) {
-  await finish('invalid', { message: error.message });
+} catch {
+  await finish('invalid');
 }
-

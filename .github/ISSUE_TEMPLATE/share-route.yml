@@ -11,7 +11,7 @@ body:
     id: route
     attributes:
       label: Route JSON
-      description: Paste one route object. The automated intake checks it before opening a pull request.
+      description: Paste one route object. A maintainer approves it before automated intake opens a pull request.
       render: json
       placeholder: |
         {

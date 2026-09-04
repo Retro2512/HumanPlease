@@ -13,7 +13,6 @@ export interface PhoneReport {
   secondsBucket: SecondsBucket;
   stepsMatched: boolean;
   steps?: PhoneStep[];
-  altPhone?: string;
   clientNonce: string;
 }
 
@@ -30,6 +29,7 @@ export interface RouteStats {
 export interface Env {
   DB: D1Database;
   REPORTS_KV: KVNamespace;
+  REPORT_RATE_LIMITER: RateLimit;
   PRODUCTION_ORIGIN: string;
   TURNSTILE_SECRET: string;
   IP_HASH_SECRET: string;

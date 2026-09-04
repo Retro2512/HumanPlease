@@ -6,15 +6,22 @@
   "description": "Privacy-safe routes through support chat trees to a human associate.",
   "license": "MIT",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "scripts": {
     "catalog": "node scripts/build-catalog.mjs",
     "reports:manifest": "node scripts/build-slug-manifest.mjs",
     "reports:manifest:upload": "node scripts/upload-slug-manifest.mjs",
     "reports:typecheck": "tsc -p services/reports/tsconfig.json",
+    "security:python:static": "python -m bandit -r scrapers scripts -q -ll",
+    "scrapers:test": "python -m unittest discover -s test -p \"test_*.py\"",
     "validate": "node scripts/validate.mjs",
-    "test": "node --import tsx --test"
+    "site:stats": "node press-zero/tools/build-data.mjs",
+    "site:check": "node scripts/check-route-pages.mjs",
+    "security:check": "npm test && npm run scrapers:test && npm run security:python:static && npm run validate && npm run reports:typecheck && npm run site:check && node scripts/security-check.mjs",
+    "security:live": "node scripts/verify-live-security.mjs",
+    "security:audit": "npm audit --audit-level=low && npm run security:check",
+    "test": "node --import tsx --test test/route.test.mjs test/ingest.test.mjs services/reports/test/reports.test.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260903.1",

@@ -6,9 +6,9 @@ manifest, and publishes aggregate stats for review through one nightly pull requ
 
 ## Endpoints
 
-All JSON responses use `Content-Type: application/json`. Browser requests are accepted from
-`https://humanplease.wiki` and `http://localhost` on any port. Other browser origins receive
-`403 origin_not_allowed`.
+All JSON responses use `Content-Type: application/json`. Browser requests are accepted only from the
+exact `PRODUCTION_ORIGIN`. Local development sets that value to `http://localhost:8123` in `.dev.vars`.
+Other browser origins receive `403 origin_not_allowed`.
 
 ### `POST /v1/reports`
 
@@ -31,45 +31,13 @@ report.
 }
 ```
 
-Success returns `201` with the current route stats. Replaying the same nonce and body within
+Success returns `201`. Replaying the same nonce and body within
 24 hours returns the cached result with `200`. Reusing a nonce for a different body returns
-`409`. A second report from the same daily IP bucket for the same slug replaces the first;
-it does not increase the total vote count.
+`409`. A second report from the same rotating reporter bucket for the same slug replaces the first;
+it does not increase the total vote count. Reports are retained for 30 days.
 
 The service accepts duration buckets only. The reported median is the representative value
 of the bucket containing the median successful report: 30, 180, 600, or 1200 seconds.
-
-### `GET /v1/stats/:slug`
-
-Returns the current aggregate for a known route:
-
-```json
-{
-  "slug": "best-buy-ca",
-  "up": 128,
-  "down": 9,
-  "lastConfirmedDay": "2026-09-01",
-  "medianSeconds": 180,
-  "sampleCount": 128,
-  "stale": false
-}
-```
-
-Routes with no reports have zero counts and `null` dates and medians. A slug absent from the
-manifest returns `404`; it is never represented as an unreported known route.
-
-### `POST /v1/stats`
-
-Fetches up to 60 known routes in request order. Duplicate slugs, unknown slugs, extra fields,
-and more than 60 entries are rejected.
-
-```json
-{ "slugs": ["best-buy-ca", "air-canada-ca"] }
-```
-
-```json
-{ "stats": [{ "slug": "best-buy-ca", "up": 128, "down": 9, "lastConfirmedDay": "2026-09-01", "medianSeconds": 180, "sampleCount": 128, "stale": false }] }
-```
 
 ### `GET /healthz`
 
@@ -77,7 +45,7 @@ Returns `{ "ok": true }` when the Worker is running.
 
 ## Local development
 
-From a clean checkout with Node 20 or newer:
+From a clean checkout with Node 24 or newer:
 
 ```sh
 npm install
@@ -89,9 +57,9 @@ npx wrangler kv key put manifest:v1 --binding REPORTS_KV --path ../../data/slug_
 npx wrangler dev
 ```
 
-On macOS or Linux, use `cp` instead of `copy`. Fill `TURNSTILE_SECRET` and
-`IP_HASH_SECRET` in `.dev.vars` before testing report submission. The stats and health
-endpoints do not require a Turnstile token. Run all tests from the repository root with
+On macOS or Linux, use `cp` instead of `copy`. Fill `TURNSTILE_SECRET` and set
+`IP_HASH_SECRET` to at least 32 random characters in `.dev.vars` before testing report submission.
+The health endpoint does not require a Turnstile token. Run all tests from the repository root with
 `npm test`; run `npm run reports:typecheck` for a standalone Worker type check.
 
 ## Deployment
@@ -105,13 +73,16 @@ endpoints do not require a Turnstile token. Run all tests from the repository ro
 5. Add every secret listed below with `npx wrangler secret put NAME`.
 6. Run `npx wrangler deploy` and map the deployed Worker URL to the client configuration.
 
-The scheduled handler runs nightly at 03:17 UTC. It removes IP buckets from reports older
-than 30 days, recomputes stats, and creates or updates the `humanplease/route-stats` pull
-request against `main`. Alternate numbers need three distinct recent buckets before the job
-opens a review issue. The job never changes a published phone number directly.
+The `REPORT_RATE_LIMITER` binding rejects bursts at Cloudflare's edge before the atomic D1 hourly
+limit. Keep both controls enabled.
 
-The GitHub App must be installed only on the target repository and have repository Contents,
-Pull requests, and Issues write access. Its installation token is minted by the Worker and is
+The scheduled handler runs nightly at 03:17 UTC. It deletes reports older than 30 days,
+recomputes stats, and creates or updates the `humanplease/route-stats` pull
+request against `main`. Public submissions never create GitHub issues or change a published
+phone number directly.
+
+The GitHub App must be installed only on the target repository and have repository Contents and
+Pull requests write access. Its installation token is minted by the Worker and is
 never stored in the repository.
 
 ## Secrets
@@ -129,12 +100,10 @@ private key.
 
 The production report endpoint is
 `https://humanplease-reports.sudhan2512.workers.dev/v1/reports`. Render invisible Turnstile
-with site key `0x4AAAAAAEmRrhF2iuMf1dTb` and send its response in the Turnstile token header.
+with site key `0x4AAAAAAEnZ9QiRgppS6sOE` and send its response in the Turnstile token header.
 Generate a fresh base64url nonce for a new report and retain it only while retrying that
 report. Do not send a raw duration, timestamp, timezone, session value, contributor value,
 free text, or Turnstile token in the JSON body.
 
-Page HTML should render the baked `data/route_stats.json` values first. A successful live
-stats response may replace those values with the current aggregate. If the API is slow,
-unreachable, rejects the request, or returns an unknown slug, leave the baked values in
-place. Do not replace them with zeros and do not clear the last-confirmed date.
+Page HTML renders only the reviewed values baked from `data/route_stats.json`. Raw Worker
+aggregates are not a public endpoint and never replace those values directly.

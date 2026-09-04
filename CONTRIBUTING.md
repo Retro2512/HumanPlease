@@ -38,8 +38,8 @@ sample window.
 1. Copy [`examples/route.json`](examples/route.json).
 2. Replace the example values with the route that worked.
 3. Run `npm run validate -- path/to/route.json`.
-4. Paste it into the **Share a route** issue form. The intake workflow creates the ranked
-   route pull request.
+4. Paste it into the **Share a route** issue form. A maintainer checks the submission and applies
+   `route-approved`; the intake workflow then creates the ranked route pull request.
 
 The selected fastest route is stored at:
 

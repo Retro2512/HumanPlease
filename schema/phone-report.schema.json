@@ -22,10 +22,6 @@
       "maxItems": 12,
       "items": { "$ref": "#/$defs/step" }
     },
-    "altPhone": {
-      "type": "string",
-      "pattern": "^\\+[1-9][0-9]{7,14}$"
-    },
     "clientNonce": {
       "type": "string",
       "pattern": "^[A-Za-z0-9_-]{16,128}$"
@@ -34,9 +30,6 @@
   "dependentSchemas": {
     "steps": {
       "properties": { "stepsMatched": { "const": false } }
-    },
-    "altPhone": {
-      "properties": { "reachedHuman": { "const": false } }
     }
   },
   "$defs": {

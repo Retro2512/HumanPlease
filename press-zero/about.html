@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How this is put together — Human, Please</title>
+<meta name="description" content="How Human, Please assembles phone numbers, keypad routes, and estimated time to a person.">
+<link rel="canonical" href="https://humanplease.wiki/about.html">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0e0e12" media="(prefers-color-scheme: dark)">
+<link rel="stylesheet" href="assets/fonts.css?v=20260903-route-rework-5">
+<link rel="stylesheet" href="assets/base.css?v=20260903-route-rework-5">
+<link rel="stylesheet" href="assets/flags.css?v=20260903-route-rework-5">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fff'/%3E%3Ctext x='16' y='24' font-family='monospace' font-size='22' font-weight='700' text-anchor='middle' fill='%23ff4a1c'%3E0%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<div class="sheet" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div class="rails" aria-hidden="true"><div class="wrap"><i></i><i></i></div></div>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="mark" href="index.html">Human<em>,</em> Please</a>
+    <span class="grow"></span>
+    <a class="back mono" href="index.html"><span class="arw">&larr;</span> Search</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="head">
+    <h2 class="co">How this<br>is put together</h2>
+  </section>
+
+  <section class="sec prose">
+    <h3>Where the contact details come from</h3>
+    <p>Phone-menu reports are combined with company contact records, official support pages and
+      official documents. One hundred major US and Canadian services also have a manual research
+      pass covering department lines, published hours, chat, messaging and callback routes. Each
+      researched contact links back to its source.</p>
+
+    <h3>What the times mean</h3>
+    <p>Every route has two parts and they are estimated differently.</p>
+    <ul>
+      <li><b>Working the menu</b> is calculated: four seconds per keypress, five to say a phrase,
+        nine to key in an account number, fifteen for a prompt you have to sit through.</li>
+      <li><b>On hold</b> is reported — the wait time the source lists for that line. It is an average
+        of other people's calls, not a promise about yours.</li>
+    </ul>
+    <p>Where a company runs several lines with different reported waits, the range is shown under the estimate.</p>
+
+    <h3>What "confirmed" means</h3>
+    <p>A route marked <b>confirmed</b> has two or more written steps recorded against it. A
+      <b>single reported route</b> came from one source and one person's memory. Companies re-cut
+      their phone trees without telling anyone, so a route that fails is normal, not surprising —
+      use the department and issue labels to choose the relevant line.</p>
+
+    <h3>What is missing</h3>
+    <p>Many companies publish contact details without publishing their phone-menu steps. Those
+      pages show the available phone, chat, form, email or website routes and state that the menu
+      is not mapped. Missing hours and country coverage stay visibly unconfirmed.</p>
+
+    <h3>What this site does with you</h3>
+    <p>No account, analytics or advertising cookies. If you save an answer, it sends only the choices shown; a rotating, pseudonymous network
+      bucket limits repeat votes and is deleted with the report after 30 days.</p>
+
+    <h3>Coverage</h3>
+    <p id="cov" class="mono thin">loading&hellip;</p>
+  </section>
+
+  <footer class="pagefoot mono">
+    <a href="index.html">Search</a>
+    <span>Data rebuilt <span id="built">—</span></span>
+  </footer>
+</main>
+
+<script src="assets/about-page.js?v=20260903-route-rework-5"></script>
+</body>
+</html>

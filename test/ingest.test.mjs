@@ -71,3 +71,13 @@ test('intake promotes a proven faster route and archives the former winner', asy
   }
 });
 
+test('invalid issue content is not echoed into privileged workflow output', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'humanplease-invalid-'));
+  try {
+    const output = await ingest(root, { site: '@target-user malicious content' }, 1);
+    assert.equal(output, 'status=invalid\n');
+    assert.doesNotMatch(output, /target-user|malicious/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
