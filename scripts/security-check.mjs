@@ -132,6 +132,16 @@ if (!/HAVING COUNT\(DISTINCT hex\(reporter_bucket\)\) >= 3/.test(workerStore)) {
   failures.push('services/reports/src/store.ts: reviewed aggregates lack reporter quorum');
 }
 if (/\breport\.altPhone\b/.test(workerStore)) failures.push('services/reports/src/store.ts: alternate phone data is still stored');
+const abuseMigration = await readFile(path.join(root, 'services', 'reports', 'migrations', '0002_abuse_controls.sql'), 'utf8');
+const privacyMigration = await readFile(path.join(root, 'services', 'reports', 'migrations', '0003_remove_alternate_phone_data.sql'), 'utf8');
+if (!/CREATE TABLE report_rate_limits/.test(abuseMigration) ||
+    !/reports_one_counted_vote_per_reporter_window/.test(abuseMigration)) {
+  failures.push('services/reports/migrations/0002_abuse_controls.sql: abuse-control schema is incomplete');
+}
+if (/alt_phone/.test(privacyMigration) || !/WHERE reporter_bucket IS NOT NULL/.test(privacyMigration) ||
+    !/reports_one_counted_vote_per_reporter_window/.test(privacyMigration)) {
+  failures.push('services/reports/migrations/0003_remove_alternate_phone_data.sql: privacy migration is incomplete');
+}
 const reportSchema = JSON.parse(await readFile(path.join(root, 'schema', 'phone-report.schema.json'), 'utf8'));
 if (Object.hasOwn(reportSchema.properties ?? {}, 'altPhone')) {
   failures.push('schema/phone-report.schema.json: alternate phone data is still accepted');
