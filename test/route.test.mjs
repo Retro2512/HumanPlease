@@ -13,6 +13,7 @@ import {
   validateStoredRoute,
   validateSubmission,
 } from '../scripts/lib/route.mjs';
+import { assertRouteStats } from '../scripts/lib/route-stats.mjs';
 
 function validSubmission(overrides = {}) {
   return {
@@ -52,6 +53,36 @@ test('rejects private values, URL queries, and invalid timings', () => {
   assert.match(errors, /query or fragment/);
   assert.match(errors, /email address/);
   assert.match(errors, /handoffSeconds/);
+});
+
+test('normalization cannot erase unsupported fields or overwrite the submitted schema version', () => {
+  const route = validSubmission({ schemaVersion: 999, privateData: 'hidden' });
+  route.steps[0].onclick = 'alert(1)';
+  const normalized = normalizeSubmission(route);
+  const errors = validateSubmission(normalized).join('\n');
+  assert.match(errors, /unsupported field "privateData"/);
+  assert.match(errors, /unsupported field "onclick"/);
+  assert.match(errors, /schemaVersion must be 2/);
+});
+
+test('rejects cross-origin path tricks, encoded separators, markup, and bidi controls', () => {
+  for (const startPath of ['//evil.example/path', '/\\evil.example/path', '/%5cevil.example/path', '/support%3fnext=evil']) {
+    assert.match(validateSubmission(validSubmission({ startPath }))[0], /startPath/);
+  }
+  assert.match(
+    validateSubmission(validSubmission({ steps: [
+      { action: 'open_chat', label: '<img src=x onerror=alert(1)>' },
+      { action: 'wait_for_human' },
+    ] }))[0],
+    /HTML markup/,
+  );
+  assert.match(
+    validateSubmission(validSubmission({ steps: [
+      { action: 'open_chat', label: `Billing\u202Etxt.exe` },
+      { action: 'wait_for_human' },
+    ] }))[0],
+    /control character/,
+  );
 });
 
 test('rejects case details in a handoff request', () => {
@@ -118,4 +149,15 @@ test('canonical storage separates the front route from archives', () => {
   const route = createStoredRoute(normalizeSubmission(validSubmission({ site: ' SHOP.EXAMPLE.COM ' })));
   assert.equal(currentRelativePath(route), 'routes/shop.example.com/en-CA/current.json');
   assert.match(archiveRelativePath(route), /^archive\/shop\.example\.com\/en-CA\/[a-f0-9]{12}\.json$/);
+});
+
+test('baked route stats reject markup, unsupported fields, and inconsistent aggregates', () => {
+  const valid = {
+    slug: 'best-buy-ca', up: 2, down: 1, lastConfirmedDay: '2026-09-04',
+    medianSeconds: 180, sampleCount: 2, stale: false,
+  };
+  assert.equal(assertRouteStats([valid])[0], valid);
+  assert.throws(() => assertRouteStats([{ ...valid, slug: '</script><script>alert(1)</script>' }]));
+  assert.throws(() => assertRouteStats([{ ...valid, sampleCount: 1 }]));
+  assert.throws(() => assertRouteStats([{ ...valid, extra: true }]));
 });

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Retro2512/HumanPlease/main/schema/phone-report.schema.json",
+  "title": "HumanPlease phone route report",
+  "description": "A privacy-safe outcome report for a phone keypad route.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "slug", "reachedHuman", "secondsBucket", "stepsMatched", "clientNonce"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,80}$"
+    },
+    "reachedHuman": { "type": "boolean" },
+    "secondsBucket": {
+      "enum": ["lt_60", "60_300", "300_900", "gt_900"]
+    },
+    "stepsMatched": { "type": "boolean" },
+    "steps": {
+      "type": "array",
+      "maxItems": 12,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "clientNonce": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{16,128}$"
+    }
+  },
+  "dependentSchemas": {
+    "steps": {
+      "properties": { "stepsMatched": { "const": false } }
+    }
+  },
+  "$defs": {
+    "step": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "key"],
+          "properties": {
+            "kind": { "const": "press" },
+            "key": { "enum": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "say" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "wait" } }
+        }
+      ]
+    }
+  }
+}

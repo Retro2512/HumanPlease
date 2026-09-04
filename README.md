@@ -76,6 +76,13 @@ Run `npm test` and `npm run validate` before opening a pull request. The validat
 incorrect timing summaries, unsafe URL parts, unexpected fields, and common forms of
 personal or secret data. It also checks that each front route still deserves its position.
 
+## Security
+
+Install `requirements-scrapers.txt`, then run `npm run security:audit` and
+`pip-audit -r requirements-scrapers.txt` for the complete local check.
+See the [current audit](docs/SECURITY_AUDIT_2026-09-03.md), [deployment controls](docs/DEPLOYMENT_SECURITY.md),
+and [private reporting instructions](SECURITY.md).
+
 ## Licence
 
 Code and route data are available under the [MIT License](LICENSE).

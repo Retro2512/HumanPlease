@@ -30,6 +30,8 @@ const UNSAFE_PATTERNS = [
   { name: 'web address', re: /\bhttps?:\/\//i },
   { name: 'secret or credential', re: /\b(?:api[_ -]?key|authorization|bearer|password|passwd|secret|token|cookie|session[_ -]?id)\b/i },
   { name: 'private key', re: /-----BEGIN [A-Z ]*PRIVATE KEY-----/ },
+  { name: 'HTML markup', re: /[<>]/ },
+  { name: 'control character', re: /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/ },
 ];
 
 function plainObject(value) {
@@ -74,10 +76,10 @@ function validateCommon(value, allowedKeys) {
     errors.push('locale must be a language tag such as en or en-CA');
   }
   if (
-    typeof value.startPath !== 'string' || !value.startPath.startsWith('/') ||
-    value.startPath.length > 240 || /[?#]/.test(value.startPath)
+    typeof value.startPath !== 'string' || !value.startPath.startsWith('/') || value.startPath.startsWith('//') ||
+    value.startPath.length > 240 || /[\\?#]/.test(value.startPath) || /%(?:0d|0a|2f|3f|5c)/i.test(value.startPath)
   ) {
-    errors.push('startPath must be a URL pathname without a query or fragment');
+    errors.push('startPath must be a same-origin URL pathname without encoded separators, query or fragment');
   }
   if (typeof value.startPath === 'string') {
     scanString(value.startPath, 'startPath', errors);
@@ -197,14 +199,15 @@ export function validateStoredRoute(value) {
 
 export function normalizeSubmission(value) {
   return {
-    schemaVersion: 2,
+    ...value,
+    schemaVersion: value.schemaVersion,
     site: value.site.trim().toLowerCase(),
     locale: value.locale.trim(),
     startPath: value.startPath.trim(),
     steps: value.steps.map((step) => {
-      if (step.action === 'send') return { action: 'send', value: step.value.trim() };
-      if (step.action === 'wait_for_human') return { action: 'wait_for_human' };
-      return { action: step.action, label: step.label.trim() };
+      if (step.action === 'send') return { ...step, value: step.value.trim() };
+      if (step.action === 'wait_for_human') return { ...step };
+      return { ...step, label: step.label.trim() };
     }),
     verifiedOn: value.verifiedOn,
     handoffSeconds: value.handoffSeconds,

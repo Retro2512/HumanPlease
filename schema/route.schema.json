@@ -11,7 +11,7 @@
     "id": { "type": "string", "pattern": "^[a-f0-9]{12}$" },
     "site": { "type": "string", "minLength": 4, "maxLength": 253 },
     "locale": { "type": "string", "minLength": 2, "maxLength": 35 },
-    "startPath": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^/[^?#]*$" },
+    "startPath": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^/(?!/)(?!.*(?:\\\\|%(?:0[dD]|0[aA]|2[fF]|3[fF]|5[cC])))[^?#]*$" },
     "steps": { "type": "array", "minItems": 1, "maxItems": 30, "items": { "$ref": "submission.schema.json#/$defs/step" } },
     "verifiedOn": { "type": "string", "format": "date" },
     "timing": {
@@ -29,4 +29,3 @@
     }
   }
 }
-
