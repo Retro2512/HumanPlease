@@ -77,6 +77,9 @@ if (!/npm ci --ignore-scripts/.test(validationWorkflow)) {
 if (!/npm audit --audit-level=low/.test(validationWorkflow)) {
   failures.push('.github/workflows/validate.yml: npm audit is missing');
 }
+if (!/cache-dependency-path:\s*requirements-scrapers\.txt/.test(validationWorkflow)) {
+  failures.push('.github/workflows/validate.yml: Python cache does not use the locked dependency file');
+}
 for (const [name, workflow] of [['validate.yml', validationWorkflow], ['ingest-route.yml', intakeWorkflow]]) {
   if (!/node-version:\s*24\b/.test(workflow)) failures.push(`.github/workflows/${name}: supported Node 24 LTS is required`);
 }
