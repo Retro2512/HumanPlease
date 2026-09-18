@@ -24,7 +24,7 @@
     "test": "node --import tsx --test test/route.test.mjs test/ingest.test.mjs services/reports/test/reports.test.mjs"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260903.1",
+    "@cloudflare/workers-types": "^5.20260915.1",
     "ajv": "^8.17.1",
     "tsx": "^4.23.13",
     "typescript": "^7.0.0",
